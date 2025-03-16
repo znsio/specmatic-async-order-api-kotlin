@@ -24,14 +24,10 @@ class OrderService(private val jacksonObjectMapper: ObjectMapper) {
     }
 
     fun get(id: Int): Order {
-        println("Inside Get")
-        println(orders)
         return orders[id] ?: throw RuntimeException("Order with id $id not found")
     }
 
     fun create(newOrder: NewOrder): Id {
-        println("Inside Create")
-        println(orders)
         val id = AtomicInteger(orders.size).incrementAndGet()
         val order = Order(id, newOrder.paymentType, newOrder.products, Accepted, newOrder.instructions)
         orders[id] = order
@@ -44,8 +40,6 @@ class OrderService(private val jacksonObjectMapper: ObjectMapper) {
             )
         )
         producer.close()
-        println("After Create")
-        println(orders)
         return Id(id)
     }
 
