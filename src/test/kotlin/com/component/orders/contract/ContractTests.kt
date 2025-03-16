@@ -39,6 +39,7 @@ class ContractTests : SpecmaticContractTest {
         @JvmStatic
         @AfterAll
         fun tearDown() {
+
             val result = kafkaMock!!.stop()
             assertThat(result.success).withFailMessage(result.errors.joinToString()).isTrue
         }

@@ -1,0 +1,1 @@
+CREATE SEQUENCE hibernate_sequence START WITH 3 INCREMENT BY 1;

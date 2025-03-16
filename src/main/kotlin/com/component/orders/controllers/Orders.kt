@@ -29,7 +29,8 @@ class Orders(@Autowired val orderService: OrderService) {
             required = true,
         ) id: Int,
     ): ResponseEntity<Order> {
-        return ResponseEntity(orderService.get(id), HttpStatus.OK)
+        val response = orderService.get(id)
+        return ResponseEntity(response, HttpStatus.OK)
     }
 
     @PostMapping(produces = [MediaType.APPLICATION_JSON_VALUE])

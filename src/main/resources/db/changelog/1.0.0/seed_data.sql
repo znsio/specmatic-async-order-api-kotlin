@@ -1,0 +1,2 @@
+INSERT INTO ORDERS (id, payment_type, products, instructions, status) VALUES (1, 'CreditCard', '[{"id":1,"quantity":5}]', 'Please deliver to the back door', 'Completed');
+INSERT INTO ORDERS (id, payment_type, products, instructions, status) VALUES (2, 'NetBanking', '[{"id":2,"quantity":10}]', null, 'InProgress');

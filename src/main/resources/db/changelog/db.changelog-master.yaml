@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/1.0.0/add_hibernate_sequence.sql
+  - include:
+      file: db/changelog/1.0.0/add_table_order.sql
+  - include:
+      file: db/changelog/1.0.0/seed_data.sql

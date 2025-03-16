@@ -1,14 +1,15 @@
 package com.component.orders.services
 
+import com.component.orders.dal.OrderRepository
 import com.component.orders.models.*
 import com.component.orders.models.OrderStatus.*
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.util.*
-import java.util.concurrent.atomic.AtomicInteger
 
 @Service
 class OrderService(private val jacksonObjectMapper: ObjectMapper) {
@@ -18,29 +19,28 @@ class OrderService(private val jacksonObjectMapper: ObjectMapper) {
     @Value("\${kafka.createOrderRequest.topic}")
     lateinit var kafkaCreateOrderRequestTopic: String
 
-    private val orders = mutableMapOf<Int, Order>().apply {
-        put(1, Order(1, PaymentType.COD, listOf(Product(1, 10)), Completed, "Home address"))
-        put(2, Order(2, PaymentType.CreditCard, listOf(Product(2, 20)), InProgress))
-    }
+    @Autowired
+    private lateinit var repo: OrderRepository
 
     fun get(id: Int): Order {
-        return orders[id] ?: throw RuntimeException("Order with id $id not found")
+        return repo.findById(id).orElseThrow {
+            RuntimeException("Order with id $id not found")
+        }
     }
 
     fun create(newOrder: NewOrder): Id {
-        val id = AtomicInteger(orders.size).incrementAndGet()
-        val order = Order(id, newOrder.paymentType, newOrder.products, Accepted, newOrder.instructions)
-        orders[id] = order
+        val order = Order(paymentType = newOrder.paymentType, products = newOrder.products, status = Accepted, instructions = newOrder.instructions)
+        val createdOrder = repo.save(order)
 
         val producer = getKafkaProducer()
         producer.send(
             ProducerRecord(
                 kafkaCreateOrderRequestTopic,
-                jacksonObjectMapper.writeValueAsString(order)
+                jacksonObjectMapper.writeValueAsString(createdOrder)
             )
         )
         producer.close()
-        return Id(id)
+        return Id(createdOrder.id)
     }
 
     private fun getKafkaProducer(): KafkaProducer<String, String> {
