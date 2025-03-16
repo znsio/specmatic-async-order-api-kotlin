@@ -1,0 +1,163 @@
+openapi: 3.0.0
+info:
+  title: Order API
+  version: '1.0'
+servers:
+  - url: http://localhost:8080
+paths:
+  /orders:
+    summary: Create a new product
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+            examples:
+              SUCCESS:
+                value:
+                  paymentType: CreditCard
+                  products: [ {
+                    id: 1,
+                    quantity: 50
+                  },
+                    {
+                      id: 2,
+                      quantity: 100
+                    } ]
+      responses:
+        '202':
+          description: Order Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderId'
+              examples:
+                SUCCESS:
+                  value:
+                    id: 123
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+  /orders/{id}:
+    get:
+      summary: Fetch Order Details by Id
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: integer
+          required: true
+          examples:
+            SUCCESS:
+              value: 3
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+              examples:
+                SUCCESS:
+                  value:
+                    id: 123
+                    paymentType: CreditCard
+                    products: [ {
+                      id: 1,
+                      quantity: 50
+                    },
+                      {
+                        id: 2,
+                        quantity: 100
+                      } ]
+                    status: InProgress
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+        '404':
+          description: Order Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+components:
+  schemas:
+    OrderRequest:
+      title: Order Details
+      type: object
+      required:
+        - paymentType
+        - products
+      properties:
+        paymentType:
+          $ref: '#/components/schemas/PaymentType'
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+        instructions:
+          type: string
+    OrderStatus:
+      title: Order Status
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - Accepted
+            - InProgress
+            - Completed
+            - Cancelled
+    OrderId:
+      title: Order Id
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+    Order:
+      title: Order Details
+      allOf:
+        - $ref: '#/components/schemas/OrderId'
+        - $ref: '#/components/schemas/OrderRequest'
+        - $ref: '#/components/schemas/OrderStatus'
+    Product:
+      title: Product Details
+      type: object
+      properties:
+        id:
+          type: integer
+        quantity:
+          type: integer
+      required:
+        - id
+        - quantity
+    PaymentType:
+      type: string
+      enum:
+        - COD
+        - CreditCard
+        - DebitCard
+        - NetBanking
+    BadRequest:
+      title: Bad Request
+      type: object
+      properties:
+        timestamp:
+          type: string
+        status:
+          type: number
+        error:
+          type: string
+        message:
+          type: string

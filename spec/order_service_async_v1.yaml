@@ -1,0 +1,129 @@
+asyncapi: 3.0.0
+info:
+  title: Order API
+  version: 1.0.0
+channels:
+  create-order-request:
+    address: create-order-request
+    messages:
+      createOrderRequest.message:
+        $ref: '#/components/messages/CreateOrderRequest'
+  create-order-reply:
+    address: create-order-reply
+    messages:
+      createOrderReply.message:
+        $ref: '#/components/messages/CreateOrderReply'
+operations:
+  createOrder:
+    action: receive
+    channel:
+      $ref: '#/channels/create-order-request'
+    messages:
+      - $ref: '#/channels/create-order-request/messages/createOrderRequest.message'
+    reply:
+      channel:
+        $ref: '#/channels/create-order-reply'
+      messages:
+        - $ref: '#/channels/create-order-reply/messages/createOrderReply.message'
+components:
+  schemas:
+    OrderRequest:
+      title: Order Details
+      type: object
+      required:
+        - paymentType
+        - products
+      properties:
+        paymentType:
+          $ref: '#/components/schemas/PaymentType'
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+        instructions:
+          type: string
+    OrderStatus:
+      title: Order Status
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - Accepted
+            - InProgress
+            - Completed
+            - Cancelled
+    OrderId:
+      title: Order Id
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+    WarehouseOrderId:
+      title: Warehouse Order Id
+      type: object
+      required:
+        - warehouseOrderId
+      properties:
+        warehouseOrderId:
+          type: integer
+    Product:
+      title: Product Details
+      type: object
+      properties:
+        id:
+          type: integer
+        quantity:
+          type: integer
+      required:
+        - id
+        - quantity
+    PaymentType:
+      type: string
+      enum:
+        - COD
+        - CreditCard
+        - DebitCard
+        - NetBanking
+  messages:
+    CreateOrderRequest:
+      name: CreateOrderRequest
+      title: Order Details
+      contentType: application/json
+      payload:
+        title: Order Details
+        allOf:
+          - $ref: '#/components/schemas/OrderId'
+          - $ref: '#/components/schemas/OrderRequest'
+          - $ref: '#/components/schemas/OrderStatus'
+      examples:
+        - name: NEW_ORDER
+          payload:
+            id: 123
+            paymentType: CreditCard
+            products:
+              - id: 1
+                quantity: 50
+              - id: 2
+                quantity: 100
+            status: Accepted
+    CreateOrderReply:
+      name: CreateOrderReply
+      title: Order Details
+      contentType: application/json
+      payload:
+        title: Order Details
+        allOf:
+          - $ref: '#/components/schemas/OrderId'
+          - $ref: '#/components/schemas/WarehouseOrderId'
+          - $ref: '#/components/schemas/OrderStatus'
+      examples:
+        - name: NEW_ORDER
+          payload:
+            id: 123
+            warehouseOrderId: 456
+            status: InProgress
