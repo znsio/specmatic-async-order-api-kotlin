@@ -17,11 +17,13 @@ class ProductsConverter : AttributeConverter<List<Product>, String> {
     override fun convertToEntityAttribute(dbData: String?): List<Product> {
         return dbData?.let {
             try {
-                objectMapper.readValue<List<Product>>(it)
+                deserialize(it)
             } catch (_: MismatchedInputException) {
                 val jsonWithoutDoubleEncoding = objectMapper.readValue<String>(it)
-                objectMapper.readValue<List<Product>>(jsonWithoutDoubleEncoding)
+                deserialize(jsonWithoutDoubleEncoding)
             }
         } ?: emptyList()
     }
+
+    private fun deserialize(s: String) = objectMapper.readValue<List<Product>>(s)
 }

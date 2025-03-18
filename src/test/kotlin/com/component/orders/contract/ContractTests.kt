@@ -21,7 +21,6 @@ class ContractTests : SpecmaticContractTest {
 
     companion object {
         private var kafkaMock: KafkaMock? = null
-        private lateinit var contractTestInstance: ContractTests
         private const val APPLICATION_HOST = "localhost"
         private const val APPLICATION_PORT = "8080"
         private const val KAFKA_MOCK_HOST = "localhost"
@@ -39,14 +38,9 @@ class ContractTests : SpecmaticContractTest {
             System.setProperty("filter", "PATH!='/health'")
             System.setProperty(CONSUMER_GROUP_ID, CONSUMER_GROUP_IDENTIFIER)
 
-            val testContextManager = TestContextManager(ContractTests::class.java)
-            testContextManager.prepareTestInstance(contractTestInstance)
-
             // Start Specmatic Kafka Mock and set the expectations
             kafkaMock = KafkaMock.startInMemoryBroker(KAFKA_MOCK_HOST, KAFKA_MOCK_PORT)
             kafkaMock?.setExpectations(listOf(Expectation("create-order-request", EXPECTED_NUMBER_OF_MESSAGES)))
-
-            contractTestInstance = ContractTests()
         }
 
         @JvmStatic
@@ -58,8 +52,14 @@ class ContractTests : SpecmaticContractTest {
             assertThat(result.success).withFailMessage(result.errors.joinToString()).isTrue
         }
 
-        private fun getOrderFromDb(orderId: Int): Order =
-            contractTestInstance.orderRepository.findById(orderId)
-                .orElseThrow { RuntimeException("Order with id $orderId not found") }
+        private fun getOrderFromDb(orderId: Int): Order = testInstance().orderRepository.findById(orderId)
+            .orElseThrow { RuntimeException("Order with id $orderId not found") }
+
+        private fun testInstance(): ContractTests {
+            val testInstance = ContractTests()
+            val contextManager = TestContextManager(ContractTests::class.java)
+            contextManager.prepareTestInstance(testInstance)
+            return testInstance
+        }
     }
 }
