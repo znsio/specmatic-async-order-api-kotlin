@@ -20,11 +20,12 @@ operations:
       $ref: '#/channels/create-order-request'
     messages:
       - $ref: '#/channels/create-order-request/messages/createOrderRequest.message'
-    reply:
-      channel:
-        $ref: '#/channels/create-order-reply'
-      messages:
-        - $ref: '#/channels/create-order-reply/messages/createOrderReply.message'
+  orderReply:
+    action: send
+    channel:
+      $ref: '#/channels/create-order-reply'
+    messages:
+      - $ref: '#/channels/create-order-reply/messages/createOrderReply.message'
 components:
   schemas:
     OrderRequest:
