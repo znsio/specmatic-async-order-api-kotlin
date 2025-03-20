@@ -56,7 +56,7 @@ class OrderStatusContractTests : SpecmaticKafkaContractTest {
         @AfterAll
         fun tearDown() {
             Thread.sleep(5000)
-            assertThat(getOrderStatusFromDb(ORDER_ID) ).isEqualTo(OrderStatus.Completed)
+            assertThat(getOrderStatusFromDb(ORDER_ID) ).isEqualTo(OrderStatus.Completed.toString())
             kafka.stop()
         }
 
