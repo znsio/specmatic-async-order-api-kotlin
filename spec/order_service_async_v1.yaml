@@ -15,13 +15,13 @@ channels:
         $ref: '#/components/messages/CreateOrderReply'
 operations:
   createOrder:
-    action: receive
+    action: send
     channel:
       $ref: '#/channels/create-order-request'
     messages:
       - $ref: '#/channels/create-order-request/messages/createOrderRequest.message'
   orderReply:
-    action: send
+    action: receive
     channel:
       $ref: '#/channels/create-order-reply'
     messages:
@@ -101,17 +101,6 @@ components:
           - $ref: '#/components/schemas/OrderId'
           - $ref: '#/components/schemas/OrderRequest'
           - $ref: '#/components/schemas/OrderStatus'
-      examples:
-        - name: NEW_ORDER
-          payload:
-            id: 123
-            paymentType: CreditCard
-            products:
-              - id: 1
-                quantity: 50
-              - id: 2
-                quantity: 100
-            status: Accepted
     CreateOrderReply:
       name: CreateOrderReply
       title: Order Details
@@ -122,9 +111,3 @@ components:
           - $ref: '#/components/schemas/OrderId'
           - $ref: '#/components/schemas/WarehouseOrderId'
           - $ref: '#/components/schemas/OrderStatus'
-      examples:
-        - name: NEW_ORDER
-          payload:
-            id: 123
-            warehouseOrderId: 456
-            status: InProgress

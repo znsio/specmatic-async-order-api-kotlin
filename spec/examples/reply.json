@@ -1,5 +1,12 @@
 {
-  "orderId": 123,
-  "warehouseOrderId": 456,
-  "status": "Completed"
+  "name": "orderUpdate",
+  "receive": {
+    "topic": "create-order-reply",
+    "payload": {
+      "id": 3,
+      "warehouseOrderId": 456,
+      "status": "Completed"
+    }
+  },
+  "send": []
 }

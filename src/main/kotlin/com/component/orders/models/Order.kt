@@ -13,6 +13,6 @@ data class Order(
     val paymentType: PaymentType = PaymentType.COD,
     @Convert(converter = ProductsConverter::class)
     val products: List<Product> = emptyList(),
-    val status: OrderStatus = OrderStatus.Accepted,
+    var status: OrderStatus = OrderStatus.Accepted,
     val instructions: String? = ""
 )
