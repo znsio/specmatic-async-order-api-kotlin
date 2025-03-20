@@ -1,15 +1,11 @@
 package com.component.orders.contract
 
-import com.component.orders.dal.OrderRepository
 import com.component.orders.models.Order
 import com.component.orders.models.OrderStatus
-import com.component.orders.models.OrderStatus.Accepted
-import com.component.orders.models.PaymentType.COD
-import com.component.orders.models.Product
 import io.specmatic.kafka.CONSUMER_GROUP_ID
 import io.specmatic.kafka.EXAMPLES_DIR
 import io.specmatic.kafka.KafkaMock
-import io.specmatic.test.SpecmaticContractTest
+import io.specmatic.kafka.SpecmaticKafkaContractTest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
@@ -17,13 +13,15 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.TestContextManager
 import org.springframework.transaction.annotation.Transactional
+import java.sql.Connection
+import javax.sql.DataSource
 
 private const val ORDER_ID = 3
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
-class OrderStatusContractTests : SpecmaticContractTest {
+class OrderStatusContractTests : SpecmaticKafkaContractTest {
     @Autowired
-    private lateinit var orderRepository: OrderRepository
+    private lateinit var dataSource: DataSource
 
     companion object {
         private const val IN_MEMORY_BROKER_HOST = "localhost"
@@ -41,7 +39,8 @@ class OrderStatusContractTests : SpecmaticContractTest {
         @BeforeAll
         @Transactional
         fun setUp() {
-            testInstance().orderRepository.save(Order(ORDER_ID, COD, listOf(Product(1, 10)), Accepted))
+            insertIntoDb("INSERT INTO orders (id, payment_type, products, status) VALUES ($ORDER_ID, 'COD', '[{\"id\":1,\"quantity\":10}]', 'Accepted')")
+
             System.setProperty(EXAMPLES_DIR, EXAMPLES_DIRECTORY)
 
             System.setProperty("host", APPLICATION_HOST)
@@ -57,18 +56,53 @@ class OrderStatusContractTests : SpecmaticContractTest {
         @JvmStatic
         @AfterAll
         fun tearDown() {
-            assertThat(getOrderFromDb(ORDER_ID).status ).isEqualTo(OrderStatus.Completed)
+            assertThat(getOrderStatusFromDb(ORDER_ID) ).isEqualTo(OrderStatus.Completed)
             kafka.stop()
         }
 
-        private fun getOrderFromDb(orderId: Int): Order = testInstance().orderRepository.findById(orderId)
-            .orElseThrow { RuntimeException("Order with id $orderId not found") }
+        private fun getOrderStatusFromDb(orderId: Int): String {
+            return fetchFromDb("SELECT status FROM orders WHERE id = $orderId")[0]["STATUS"] as String
+        }
 
         private fun testInstance(): OrderStatusContractTests {
             val testInstance = OrderStatusContractTests()
             val contextManager = TestContextManager(OrderStatusContractTests::class.java)
             contextManager.prepareTestInstance(testInstance)
             return testInstance
+        }
+
+        fun insertIntoDb(sql: String) {
+            var connection: Connection? = null
+            try {
+                connection = testInstance().dataSource.connection
+                val statement = connection.createStatement()
+                statement.execute(sql)
+            } finally {
+                connection?.close()
+            }
+        }
+
+        fun fetchFromDb(sql: String): List<Map<String, Any>> {
+            var connection: Connection? = null
+            val results = mutableListOf<Map<String, Any>>()
+            try {
+                connection = testInstance().dataSource.connection
+                val statement = connection.createStatement()
+                val resultSet = statement.executeQuery(sql)
+                val metaData = resultSet.metaData
+                val columnCount = metaData.columnCount
+
+                while (resultSet.next()) {
+                    val row = mutableMapOf<String, Any>()
+                    for (i in 1..columnCount) {
+                        row[metaData.getColumnName(i)] = resultSet.getObject(i)
+                    }
+                    results.add(row)
+                }
+            } finally {
+                connection?.close()
+            }
+            return results
         }
     }
 }
