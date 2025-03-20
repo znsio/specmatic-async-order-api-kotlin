@@ -1,6 +1,5 @@
 package com.component.orders.contract
 
-import com.component.orders.models.Order
 import com.component.orders.models.OrderStatus
 import io.specmatic.kafka.CONSUMER_GROUP_ID
 import io.specmatic.kafka.EXAMPLES_DIR
@@ -64,29 +63,15 @@ class OrderStatusContractTests : SpecmaticKafkaContractTest {
             return fetchFromDb("SELECT status FROM orders WHERE id = $orderId")[0]["STATUS"] as String
         }
 
-        private fun testInstance(): OrderStatusContractTests {
-            val testInstance = OrderStatusContractTests()
-            val contextManager = TestContextManager(OrderStatusContractTests::class.java)
-            contextManager.prepareTestInstance(testInstance)
-            return testInstance
-        }
-
-        fun insertIntoDb(sql: String) {
-            var connection: Connection? = null
-            try {
-                connection = testInstance().dataSource.connection
-                val statement = connection.createStatement()
-                statement.execute(sql)
-            } finally {
-                connection?.close()
+        private fun insertIntoDb(sql: String) {
+            withDbConnection { connection ->
+                connection.createStatement().execute(sql)
             }
         }
 
-        fun fetchFromDb(sql: String): List<Map<String, Any>> {
-            var connection: Connection? = null
-            val results = mutableListOf<Map<String, Any>>()
-            try {
-                connection = testInstance().dataSource.connection
+        private fun fetchFromDb(sql: String): List<Map<String, Any>> {
+            return withDbConnection { connection ->
+                val results = mutableListOf<Map<String, Any>>()
                 val statement = connection.createStatement()
                 val resultSet = statement.executeQuery(sql)
                 val metaData = resultSet.metaData
@@ -99,10 +84,25 @@ class OrderStatusContractTests : SpecmaticKafkaContractTest {
                     }
                     results.add(row)
                 }
+                results
+            }
+        }
+
+        private fun testInstance(): OrderStatusContractTests {
+            val testInstance = OrderStatusContractTests()
+            val contextManager = TestContextManager(OrderStatusContractTests::class.java)
+            contextManager.prepareTestInstance(testInstance)
+            return testInstance
+        }
+
+        private fun <T> withDbConnection(action: (Connection) -> T): T {
+            var connection: Connection? = null
+            return try {
+                connection = testInstance().dataSource.connection
+                action(connection)
             } finally {
                 connection?.close()
             }
-            return results
         }
     }
 }
