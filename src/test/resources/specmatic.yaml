@@ -2,6 +2,5 @@ version: 2
 contracts:
   - provides:
       - spec/order_service_v1.yaml
-      - spec/order_service_async_v1.yaml
     consumes:
       - spec/order_service_async_v1.yaml
