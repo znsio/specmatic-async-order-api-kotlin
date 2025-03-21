@@ -50,6 +50,7 @@ class OrderCreateRequestContractTests : SpecmaticContractTest {
         @JvmStatic
         @AfterAll
         fun tearDown() {
+            Thread.sleep(1000)
             val result = kafkaMock!!.stop()
             assertThat(result.success).withFailMessage(result.errors.joinToString()).isTrue
             assertThat(getOrderFromDb(3).status).isEqualTo(OrderStatus.Completed)

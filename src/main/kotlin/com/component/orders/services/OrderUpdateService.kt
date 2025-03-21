@@ -11,7 +11,7 @@ import java.time.Duration
 import java.util.concurrent.Executors
 
 @Service
-class OrderUpdateService() {
+class OrderUpdateService {
     @Value("\${kafka.updateOrderReply.topic}")
     lateinit var kafkaUpdateOrderReplyTopic: String
 
@@ -26,25 +26,16 @@ class OrderUpdateService() {
 
     @PostConstruct
     fun initConsumer() {
-        val executor = Executors.newSingleThreadExecutor()
-
-        executor.execute {
-            listen()
-        }
-
+        Executors.newSingleThreadExecutor().execute { listen() }
         println("Kafka Consumer started in the background. Exiting main thread...")
     }
 
-    fun listen() {
-        val consumer = kafkaService.consumer()
-        consumer.subscribe(listOf(kafkaUpdateOrderReplyTopic))
-
-        println("Listening for messages on topic: $kafkaUpdateOrderReplyTopic")
-
-        while (true) {
-            val records = consumer.poll(Duration.ofMillis(1000)) // Poll every second
-            for (record in records) {
-                processMessage(record.value())
+    private fun listen() {
+        kafkaService.consumer().apply {
+            subscribe(listOf(kafkaUpdateOrderReplyTopic))
+            println("Listening for messages on topic: $kafkaUpdateOrderReplyTopic")
+            while (true) {
+                poll(Duration.ofMillis(1000)).forEach { processMessage(it.value()) }
             }
         }
     }
@@ -59,8 +50,5 @@ class OrderUpdateService() {
         orderRepository.save(order)
     }
 
-    data class OrderUpdate(
-        val id: Int,
-        val status: String
-    )
+    data class OrderUpdate(val id: Int, val status: String)
 }
