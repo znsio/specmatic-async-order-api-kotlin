@@ -6,6 +6,7 @@ import com.component.orders.models.OrderStatus
 import io.specmatic.kafka.CONSUMER_GROUP_ID
 import io.specmatic.kafka.Expectation
 import io.specmatic.kafka.KafkaMock
+import io.specmatic.kafka.VersionInfo
 import io.specmatic.test.SpecmaticContractTest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll
@@ -32,6 +33,7 @@ class OrderCreateRequestContractTests : SpecmaticContractTest {
         @JvmStatic
         @BeforeAll
         fun setUp() {
+            println("Using specmatic kafka - ${VersionInfo.describe()}")
             System.setProperty("host", APPLICATION_HOST)
             System.setProperty("port", APPLICATION_PORT)
             System.setProperty("endpointsAPI", ACTUATOR_MAPPINGS_ENDPOINT)
