@@ -1,0 +1,39 @@
+{
+  "type": "record",
+  "name": "CreateOrderRequest",
+  "namespace": "order",
+  "fields": [
+    { "name": "id", "type": "int" },
+    {
+      "name": "paymentType",
+      "type": {
+        "type": "enum",
+        "name": "PaymentType",
+        "symbols": ["COD", "CreditCard", "DebitCard", "NetBanking"]
+      }
+    },
+    {
+      "name": "products",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "Product",
+          "fields": [
+            { "name": "id", "type": "int" },
+            { "name": "quantity", "type": "int" }
+          ]
+        }
+      }
+    },
+    { "name": "instructions", "type": "string", "default": "" },
+    {
+      "name": "status",
+      "type": {
+        "type": "enum",
+        "name": "StatusEnum",
+        "symbols": ["Accepted", "InProgress", "Completed", "Cancelled"]
+      }
+    }
+  ]
+}
