@@ -1,0 +1,9 @@
+FROM alpine/curl:latest
+
+# Copy entrypoint script
+COPY register-schema.sh /register-schema.sh
+
+# Make the entrypoint script executable
+RUN chmod +x /register-schema.sh
+
+ENTRYPOINT ["/register-schema.sh"]

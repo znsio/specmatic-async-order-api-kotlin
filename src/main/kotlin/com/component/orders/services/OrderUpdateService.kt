@@ -35,7 +35,7 @@ class OrderUpdateService {
             subscribe(listOf(kafkaUpdateOrderReplyTopic))
             println("Listening for messages on topic: $kafkaUpdateOrderReplyTopic")
             while (true) {
-                poll(Duration.ofMillis(1000)).forEach { processMessage(it.value()) }
+                poll(Duration.ofMillis(1000)).forEach { processMessage(it.value().toString()) }
             }
         }
     }

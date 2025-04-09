@@ -1,0 +1,51 @@
+#!/bin/sh
+set -e
+
+# Check for Schema Registry URL
+if [ -z ${SCHEMA_REGISTRY_URL+x} ]; then
+    echo 'SCHEMA_REGISTRY_URL env variable is not set. Exiting.'
+    exit 1
+fi
+
+# Wait for Schema Registry
+echo -n 'Waiting for Schema Registry to be ready'
+until [ "$(curl -s -w '%{http_code}' -o /dev/null "${SCHEMA_REGISTRY_URL}/subjects")" -eq 200 ]; do
+    sleep 5
+    echo -n '.'
+done
+echo
+echo "Schema Registry is ready at ${SCHEMA_REGISTRY_URL}"
+
+# Process schema files
+for schema_file in /schemas/*.avsc; do
+    [ -f "$schema_file" ] || continue
+
+    echo "Processing schema file: $schema_file"
+
+    # Get schema name from filename
+    schema_name=$(basename "$schema_file" .avsc)
+    echo "Registering schema for topic: $schema_name"
+
+    # Read schema content and escape it properly
+    schema_content=$(sed 's/"/\\"/g' "$schema_file" | tr -d '\n')
+
+    # Create request body
+    request_body="{\"schema\": \"${schema_content}\"}"
+
+    # Register schema
+    response=$(curl -s -X POST \
+        "${SCHEMA_REGISTRY_URL}/subjects/${schema_name}-value/versions" \
+        -H "Content-Type: application/vnd.schemaregistry.v1+json" \
+        -d "$request_body")
+
+    echo "Response: $response"
+
+    if echo "$response" | grep -q "error_code"; then
+        echo "Error registering schema for $schema_name"
+        echo "Error details: $response"
+    else
+        echo "Successfully registered schema for $schema_name"
+    fi
+done
+
+echo "Schema registration completed"
