@@ -15,19 +15,24 @@ Order API accepts request for an order which is created asynchronously.
 ```shell
 ./setup-specmatic-kafka-mock.sh
 ```
-2. Run the application:
+2. Generate POJO classes from AVRO schema:
+```shell
+./gradlew generateAvroJava
+```
+
+3. Run the application:
 ```shell
 ./gradlew bootRun
 ```
 
-3. Run the contract test:
+4. Run the contract test:
 ```shell
 ./runContractTest.sh
 ```
 
-4. Stop the application.
+5. Stop the application.
 
-5. Clean up the specmatic kafka mock once test run is complete:
+6. Clean up the specmatic kafka mock once test run is complete:
 ```shell
 ./cleanup-specmatic-kafka-mock.sh
 ```
