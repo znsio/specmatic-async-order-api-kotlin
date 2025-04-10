@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  specmatic-contract-test:
+    image: znsio/specmatic
+    network_mode: host
+    volumes:
+      - ./spec/order_service_v1.yaml:/usr/src/app/order_service_v1.yaml
+    command: ["test", "order_service_v1.yaml", "--testBaseURL", "http://host.docker.internal:8080"]

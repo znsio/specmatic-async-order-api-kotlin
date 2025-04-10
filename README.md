@@ -8,3 +8,26 @@ Order API accepts request for an order which is created asynchronously.
 1. We use OpenAPI spec to contract test on the HTTP interface which results in the application posting to a Kafka Broker
 2. And Specmatic Kafka Mock uses AsyncAPI spec to spin up a Mock Kafka Broker to received, validate and respond with appropriate messages
   a. We are leveraging `request-reply` pattern in AsyncAPI here
+
+## How to run contract tests?
+
+1. Set up the specmatic kafka mock:
+```shell
+./setup-specmatic-kafka-mock.sh
+```
+2. Run the application:
+```shell
+./gradlew bootRun
+```
+
+3. Run the contract test:
+```shell
+./runContractTest.sh
+```
+
+4. Stop the application.
+
+5. Clean up the specmatic kafka mock once test run is complete:
+```shell
+./cleanup-specmatic-kafka-mock.sh
+```

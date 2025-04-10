@@ -2,7 +2,7 @@
 set -e
 
 # Check for Schema Registry URL
-if [ -z ${SCHEMA_REGISTRY_URL+x} ]; then
+if [ -z "${SCHEMA_REGISTRY_URL}" ]; then
     echo 'SCHEMA_REGISTRY_URL env variable is not set. Exiting.'
     exit 1
 fi
@@ -22,9 +22,20 @@ for schema_file in /schemas/*.avsc; do
 
     echo "Processing schema file: $schema_file"
 
-    # Get schema name from filename
-    schema_name=$(basename "$schema_file" .avsc)
-    echo "Registering schema for topic: $schema_name"
+    filename=$(basename "$schema_file" .avsc)
+
+    # CUSTOM MAPPING for your case:
+    # If the schema is CreateOrderReply.avsc, use topic = create-order-reply and class = order.CreateOrderReply
+    if [ "$filename" = "CreateOrderReply" ]; then
+        topic_name="create-order-reply"
+        record_class="order.CreateOrderReply"
+        subject="${topic_name}-${record_class}"
+    else
+        echo "Unknown schema: $filename. Skipping."
+        continue
+    fi
+
+    echo "Registering schema under subject: $subject"
 
     # Read schema content and escape it properly
     schema_content=$(sed 's/"/\\"/g' "$schema_file" | tr -d '\n')
@@ -34,18 +45,18 @@ for schema_file in /schemas/*.avsc; do
 
     # Register schema
     response=$(curl -s -X POST \
-        "${SCHEMA_REGISTRY_URL}/subjects/${schema_name}-value/versions" \
+        "${SCHEMA_REGISTRY_URL}/subjects/${subject}/versions" \
         -H "Content-Type: application/vnd.schemaregistry.v1+json" \
         -d "$request_body")
 
     echo "Response: $response"
 
     if echo "$response" | grep -q "error_code"; then
-        echo "Error registering schema for $schema_name"
+        echo "❌ Error registering schema for $subject"
         echo "Error details: $response"
     else
-        echo "Successfully registered schema for $schema_name"
+        echo "✅ Successfully registered schema for $subject"
     fi
 done
 
-echo "Schema registration completed"
+echo "✅ Schema registration completed"

@@ -1,7 +1,8 @@
 FROM alpine/curl:latest
 
-# Copy entrypoint script
+# Copy entrypoint script and schema files
 COPY register-schema.sh /register-schema.sh
+COPY src/main/avro /schemas
 
 # Make the entrypoint script executable
 RUN chmod +x /register-schema.sh

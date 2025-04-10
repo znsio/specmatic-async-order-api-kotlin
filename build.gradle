@@ -6,6 +6,7 @@ plugins {
     id 'org.springframework.boot' version '3.4.0'
     id 'org.jetbrains.kotlin.plugin.spring' version '2.1.0'
     id 'jacoco'
+    id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1"
 }
 
 repositories {
@@ -100,5 +101,17 @@ configurations {
         exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
         exclude group: 'ch.qos.logback', module: 'logback-classic'
         exclude group: 'org.apache.logging.log4j', module: 'log4j-to-slf4j'
+    }
+}
+
+avro {
+    setCreateSetters(true)
+    fieldVisibility.set("PRIVATE")
+    outputCharacterEncoding.set("UTF-8")
+}
+
+sourceSets {
+    main {
+        java.srcDirs("build/generated-main-avro-java")
     }
 }

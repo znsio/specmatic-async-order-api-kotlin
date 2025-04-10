@@ -2,6 +2,8 @@ package com.component.orders.services
 
 import io.confluent.kafka.serializers.KafkaAvroDeserializer
 import io.confluent.kafka.serializers.KafkaAvroSerializer
+import order.CreateOrderReply
+import order.CreateOrderRequest
 import org.apache.avro.generic.GenericRecord
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.KafkaConsumer
@@ -21,15 +23,16 @@ class KafkaService {
     @Value("\${schema.registry.url}")
     lateinit var schemaRegistryUrl: String
 
-    fun producer(): KafkaProducer<String, GenericRecord> = KafkaProducer(producerProperties())
+    fun producer(): KafkaProducer<String, CreateOrderRequest> = KafkaProducer(producerProperties())
 
-    fun consumer(): KafkaConsumer<String, GenericRecord> = KafkaConsumer(consumerProperties())
+    fun consumer(): KafkaConsumer<String, CreateOrderReply> = KafkaConsumer(consumerProperties())
 
     private fun producerProperties(): Properties = Properties().apply {
         put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaBootstrapServers)
         put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer::class.java.name)
         put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer::class.java.name)
         put("schema.registry.url", schemaRegistryUrl)
+        put("value.subject.name.strategy", "io.confluent.kafka.serializers.subject.TopicRecordNameStrategy")
     }
 
     private fun consumerProperties(): Properties = producerProperties().apply {
@@ -39,5 +42,7 @@ class KafkaService {
         put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
         put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true")
         put("schema.registry.url", schemaRegistryUrl)
+        put("specific.avro.reader", "true")
+        put("value.subject.name.strategy", "io.confluent.kafka.serializers.subject.TopicRecordNameStrategy")
     }
 }

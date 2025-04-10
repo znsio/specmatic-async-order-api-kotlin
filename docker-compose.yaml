@@ -56,11 +56,16 @@ services:
       - schema-registry
     environment:
       SCHEMA_REGISTRY_URL: http://schema-registry:8085
+
+  specmatic-kafka-mock:
+    image: znsio/specmatic-kafka
+    depends_on:
+      - schema-registry
+    network_mode: host
+    environment:
+      SCHEMA_REGISTRY_URL: http://localhost:8085
     volumes:
-      - type: bind
-        source: ./spec/avro/CreateOrderRequest.avsc
-        target: /schemas/CreateOrderRequest.avsc
-      - type: bind
-        source: ./spec/avro/CreateOrderReply.avsc
-        target: /schemas/CreateOrderReply.avsc
+      - ./spec/order_service_async_v1.yaml:/usr/src/app/order_service_async_v1.yaml
+      - ./src/main/avro:/usr/src/src/main/avro
+    command: ["virtualize", "order_service_async_v1.yaml", "--external-broker-url", "localhost:9092"]
 
