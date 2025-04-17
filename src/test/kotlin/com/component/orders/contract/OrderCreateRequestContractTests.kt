@@ -5,7 +5,6 @@ import com.component.orders.models.Order
 import com.component.orders.models.OrderStatus
 import io.specmatic.kafka.Expectation
 import io.specmatic.kafka.KafkaMock
-import io.specmatic.kafka.VersionInfo
 import io.specmatic.test.SpecmaticContractTest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll
@@ -28,22 +27,13 @@ class OrderCreateRequestContractTests : SpecmaticContractTest {
     @Autowired
     private lateinit var orderRepository: OrderRepository
 
-    private val dockerComposeContainer = DockerComposeContainer(
-        File("src/test/resources/docker-compose.yaml")
-    ).withLocalCompose(true).waitingFor(
-        "schema-registry",
-        LogMessageWaitStrategy()
-            .withRegEx(".*(?i)server started, listening for requests.*")
-            .withStartupTimeout(Duration.ofSeconds(60))
-    )
-
-    private var kafkaMock: KafkaMock? = null
+    private val kafkaAndSchemaRegistry = kafkaAndSchemaRegistry()
+    private lateinit var kafkaMock: KafkaMock
 
     @BeforeAll
     fun setUp() {
-        dockerComposeContainer.start()
+        kafkaAndSchemaRegistry.start()
 
-        println("Using specmatic kafka - ${VersionInfo.describe()}")
         System.setProperty("host", APPLICATION_HOST)
         System.setProperty("port", APPLICATION_PORT)
         System.setProperty("endpointsAPI", ACTUATOR_MAPPINGS_ENDPOINT)
@@ -52,7 +42,7 @@ class OrderCreateRequestContractTests : SpecmaticContractTest {
 
         // Connect Specmatic Kafka Mock with the kafka broker and set the expectations
         kafkaMock = KafkaMock.connectWithBroker(KAFKA_MOCK_HOST, KAFKA_MOCK_PORT)
-        kafkaMock?.setExpectations(
+        kafkaMock.setExpectations(
             listOf(
                 Expectation("create-order-request", EXPECTED_NUMBER_OF_MESSAGES),
                 Expectation("create-order-reply", EXPECTED_NUMBER_OF_MESSAGES)
@@ -62,15 +52,27 @@ class OrderCreateRequestContractTests : SpecmaticContractTest {
 
     @AfterAll
     fun tearDown() {
-        dockerComposeContainer.stop()
-        Thread.sleep(1000)
-        val result = kafkaMock!!.stop()
+        kafkaAndSchemaRegistry.stop()
+
+        val result = kafkaMock.stop()
         assertThat(result.success).withFailMessage(result.errors.joinToString()).isTrue
-        assertThat(getOrderFromDb(3).status).isEqualTo(OrderStatus.Completed)
+
+        assertThat(orderFromDBWithId(3).status).isEqualTo(OrderStatus.Completed)
     }
 
-    private fun getOrderFromDb(orderId: Int): Order = orderRepository.findById(orderId)
+    private fun orderFromDBWithId(orderId: Int): Order = orderRepository.findById(orderId)
         .orElseThrow { RuntimeException("Order with id $orderId not found") }
+
+    private fun kafkaAndSchemaRegistry(): DockerComposeContainer<*> {
+        return DockerComposeContainer(
+            File("src/test/resources/docker-compose.yaml")
+        ).withLocalCompose(true).waitingFor(
+            "schema-registry",
+            LogMessageWaitStrategy()
+                .withRegEx(".*(?i)server started, listening for requests.*")
+                .withStartupTimeout(Duration.ofSeconds(60))
+        )
+    }
 
     companion object {
         private const val APPLICATION_HOST = "localhost"

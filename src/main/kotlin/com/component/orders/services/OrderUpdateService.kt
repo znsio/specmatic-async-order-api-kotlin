@@ -34,20 +34,20 @@ class OrderUpdateService {
     @PostConstruct
     fun initConsumer() {
         Executors.newSingleThreadExecutor().execute { listen() }
-        println("Kafka Consumer started in the background. Exiting main thread...")
+        println("[order-service] Kafka Consumer started in the background. Exiting main thread...")
     }
 
     private fun listen() {
         kafkaService.consumer().apply {
             subscribe(listOf(kafkaUpdateOrderReplyTopic))
-            println("Listening for messages on topic: $kafkaUpdateOrderReplyTopic")
+            println("[order-service] Listening for messages on topic: $kafkaUpdateOrderReplyTopic")
             while (true) {
                 poll(Duration.ofMillis(1000)).forEach {
                     try {
-                        println("Received a message on topic '$kafkaUpdateOrderReplyTopic': ${it.value()}")
+                        println("[order-service] Received a message on topic '$kafkaUpdateOrderReplyTopic': ${it.value()}")
                         processMessage(it.value())
                     } catch(e: Throwable) {
-                        println("Skipped processing of the received message since it is invalid: ${e.message}")
+                        println("[order-service] Skipped processing of the received message since it is invalid: ${e.message}")
                     }
                 }
             }
@@ -55,7 +55,7 @@ class OrderUpdateService {
     }
 
     private fun processMessage(message: CreateOrderReply) {
-        println("Processing message: $message")
+        println("[order-service] Processing message: $message")
         val orderUpdate = OrderUpdate(
             id = message.id,
             status = message.status.name
