@@ -9,30 +9,25 @@ Order API accepts request for an order which is created asynchronously.
 2. And Specmatic Kafka Mock uses AsyncAPI spec to spin up a Mock Kafka Broker to received, validate and respond with appropriate messages
   a. We are leveraging `request-reply` pattern in AsyncAPI here
 
-## How to run contract tests?
+## How to run contract tests manually?
 
 1. Set up the specmatic kafka mock:
 ```shell
 ./setup-specmatic-kafka-mock.sh
 ```
-2. Generate POJO classes from AVRO schema:
-```shell
-./gradlew generateAvroJava
-```
-
-3. Run the application:
+2. Run the application:
 ```shell
 ./gradlew bootRun
 ```
 
-4. Run the contract test:
+3. Run the contract test:
 ```shell
 ./runContractTest.sh
 ```
 
-5. Stop the application.
+4. Stop the application.
 
-6. Clean up the specmatic kafka mock once test run is complete:
+5. Clean up the specmatic kafka mock once test run is complete:
 ```shell
 ./cleanup-specmatic-kafka-mock.sh
 ```
