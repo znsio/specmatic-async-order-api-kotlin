@@ -1,0 +1,17 @@
+{
+  "type": "record",
+  "name": "CreateOrderReply",
+  "namespace": "order",
+  "fields": [
+    { "name": "id", "type": "int" },
+    { "name": "warehouseOrderId", "type": "int" },
+    {
+      "name": "status",
+      "type": {
+        "type": "enum",
+        "name": "StatusEnum",
+        "symbols": ["Accepted", "InProgress", "Completed", "Cancelled"]
+      }
+    }
+  ]
+}

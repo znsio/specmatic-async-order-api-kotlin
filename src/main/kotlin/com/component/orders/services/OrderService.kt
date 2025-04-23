@@ -4,6 +4,16 @@ import com.component.orders.dal.OrderRepository
 import com.component.orders.models.*
 import com.component.orders.models.OrderStatus.*
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient
+import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient
+import jakarta.annotation.PostConstruct
+import order.CreateOrderRequest
+import order.PaymentType
+import order.Product
+import order.StatusEnum
+import org.apache.avro.Schema
+import org.apache.avro.generic.GenericData
+import org.apache.avro.generic.GenericRecord
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
@@ -27,17 +37,35 @@ class OrderService(private val jacksonObjectMapper: ObjectMapper) {
     }
 
     fun create(newOrder: NewOrder): Id {
-        val order = Order(paymentType = newOrder.paymentType, products = newOrder.products, status = Accepted, instructions = newOrder.instructions)
+        val order = Order(
+            paymentType = newOrder.paymentType,
+            products = newOrder.products,
+            status = Accepted,
+            instructions = newOrder.instructions
+        )
         val createdOrder = repo.save(order)
 
         val producer = kafkaService.producer()
-        producer.send(
-            ProducerRecord(
-                kafkaCreateOrderRequestTopic,
-                jacksonObjectMapper.writeValueAsString(createdOrder)
+
+        try {
+            val createOrderRequest = CreateOrderRequest.newBuilder()
+                .setId(order.id)
+                .setPaymentType(PaymentType.valueOf(order.paymentType.toString()))
+                .setProducts(
+                    order.products.map { Product(it.id, it.quantity) }
+                )
+                .setStatus(StatusEnum.Accepted)
+                .setInstructions(order.instructions)
+                .build()
+
+            producer.send(
+                ProducerRecord(kafkaCreateOrderRequestTopic, createOrderRequest)
             )
-        )
-        producer.close()
-        return Id(createdOrder.id)
+            producer.close()
+            return Id(createdOrder.id)
+        } catch(e: Throwable) {
+            e.printStackTrace()
+            throw e
+        }
     }
 }

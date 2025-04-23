@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - /var/lib/zookeeper
+
+  broker:
+    image: confluentinc/cp-kafka:latest
+    hostname: broker
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: CONTROLLER://:9091,EXTERNAL://:9092,INTERNAL://:9093
+      KAFKA_ADVERTISED_LISTENERS: EXTERNAL://localhost:9092,INTERNAL://broker:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT,INTERNAL:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9091
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_NUM_PARTITIONS: 3
+      CLUSTER_ID: v1-12345678-1234-1234-1234-123456789abc
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.2.1
+    hostname: schema-registry
+    depends_on:
+      - broker
+    ports:
+      - "8085:8085"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://broker:9093
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8085
+      SCHEMA_REGISTRY_AUTO_REGISTER_SCHEMAS: false
+
+  register-schema:
+    build:
+      context: .
+      dockerfile: registerSchemaDockerfile
+    depends_on:
+      - schema-registry
+    environment:
+      SCHEMA_REGISTRY_URL: http://schema-registry:8085
+
+  specmatic-kafka-mock:
+    image: znsio/specmatic-kafka
+    depends_on:
+      - schema-registry
+    network_mode: host
+    environment:
+      SCHEMA_REGISTRY_URL: http://localhost:8085
+    volumes:
+      - ./spec/order_service_async_v1.yaml:/usr/src/app/order_service_async_v1.yaml
+      - ./src/main/avro:/usr/src/src/main/avro
+    command: ["virtualize", "order_service_async_v1.yaml", "--external-broker-url", "localhost:9092"]
+
