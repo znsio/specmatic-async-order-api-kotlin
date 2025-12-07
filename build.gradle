@@ -53,7 +53,7 @@ dependencies {
     implementation 'javax.validation:validation-api:2.0.1.Final'
     implementation 'com.h2database:h2'
     implementation 'org.liquibase:liquibase-core'
-    implementation 'com.fasterxml.jackson.module:jackson-module-kotlin:2.15.0'
+    implementation 'com.fasterxml.jackson.module:jackson-module-kotlin:2.20.1'
 
     testApi "io.specmatic:junit5-support:2.7.6"
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
