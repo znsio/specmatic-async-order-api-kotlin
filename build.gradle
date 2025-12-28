@@ -55,7 +55,7 @@ dependencies {
     implementation 'org.liquibase:liquibase-core'
     implementation 'com.fasterxml.jackson.module:jackson-module-kotlin:2.15.0'
 
-    testApi "io.specmatic:junit5-support:2.7.6"
+    testApi "io.specmatic:junit5-support:2.32.0"
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation("io.specmatic.kafka:specmatic-kafka:$specmaticKafkaVersion")
     testImplementation(
